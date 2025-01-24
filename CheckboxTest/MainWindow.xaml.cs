@@ -6,6 +6,10 @@ using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.UI.ViewManagement;
 
 namespace CheckboxTest
 {
@@ -28,28 +32,31 @@ namespace CheckboxTest
                 }
             }
         }
-
-        private void OnOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
+        private void OnContentDialogOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
         {
             if (sender is ContentDialog dialog)
             {
-                foreach (var control in Traverse(dialog))
-                {
-                    if (control is FrameworkElement element)
-                    {
-                        Debug.WriteLine($"Type: {element.GetType().Name}, Name: {element.Name}");
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"Type: {control.GetType().Name}");
-                    }
-                }
+                const string BUTTON_TO_FOCUS = "Cancel";
                 if (dialog.FindName("DeleteDontAskCheckbox") is CheckBox checkbox)
                 {
-                    dialog.DispatcherQueue.TryEnqueue(() =>
+                    checkbox.GettingFocus += (sender, e) =>
                     {
-                        dialog.Focus(FocusState.Programmatic);
-                    });
+                        e.Handled = e.Cancel = true;
+                        localFocusButton();
+                    };
+                    localFocusButton();
+                    void localFocusButton()
+                    {                        
+                        if (Traverse(dialog)
+                            .OfType<Button>()
+                            .FirstOrDefault(_ => _.Content?.ToString() == BUTTON_TO_FOCUS) is { } button)
+                        {
+                            if (button.FocusState == FocusState.Unfocused)
+                            {
+                                button.Focus(FocusState.Programmatic);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -79,6 +86,5 @@ namespace CheckboxTest
                 }
             }
         }
-
     }
 }
