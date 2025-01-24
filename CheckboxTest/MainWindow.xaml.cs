@@ -36,33 +36,23 @@ namespace CheckboxTest
         {
             if (sender is ContentDialog dialog)
             {
-                const string BUTTON_TO_FOCUS = "Cancel";
-                // Allowing for possible race condition...
-                if (dialog.FindName("DeleteDontAskCheckbox") is CheckBox checkbox)
+                if( !dialog.DispatcherQueue.TryEnqueue(() => 
                 {
-                    // Prevent the thing you don't want
-                    checkbox.GettingFocus += (sender, e) =>
-                    {
-                        e.Handled = e.Cancel = true;
-                        localFocusButton();
-                    };
-                    // Request the thing you do want
-                    localFocusButton();
+                    const string BUTTON_TO_FOCUS = "Cancel";
 
-                    #region L o c a l F x
-                    void localFocusButton()
-                    {                        
-                        if (Traverse(dialog)
-                            .OfType<Button>()
-                            .FirstOrDefault(_ => _.Content?.ToString() == BUTTON_TO_FOCUS) is { } button)
+                    // Find by text
+                    if (Traverse(dialog)
+                        .OfType<Button>()
+                        .FirstOrDefault(_ => _.Content?.ToString() == BUTTON_TO_FOCUS) is { } button)
+                    {
+                        if (button.FocusState == FocusState.Unfocused)
                         {
-                            if (button.FocusState == FocusState.Unfocused)
-                            {
-                                button.Focus(FocusState.Programmatic);
-                            }
+                            button.Focus(FocusState.Programmatic);
                         }
                     }
-                    #endregion L o c a l F x
+                }))
+                {
+                    Debug.WriteLine("Failed to enqueue action.");
                 }
             }
         }

@@ -19,7 +19,7 @@
             Opened="OnContentDialogOpened">
             <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Spacing="12">
                 <TextBlock TextWrapping="Wrap" Text="Are you sure you want to move file 'somefile.jpg' to the Recycle Bin?" />
-                <CheckBox x:Name="DeleteDontAskCheckbox" Content="Don't ask me again" />
+                <CheckBox x:Name="DeleteDontAskCheckbox" IsTabStop="False"  Content="Don't ask me again" />
             </StackPanel>
         </ContentDialog>
     </StackPanel>

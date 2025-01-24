@@ -1,6 +1,4 @@
-Granted, this is the more complicated answer but when I tried simply setting `IsTabStop` to `false` I couldn't get that to work, and that doesn't provide the opportunity to focus the intended button. I tested this as a proof of concept and will link my repo in the comments.
-
-**Step One**, we need an iterator for the `ContentDiaolg` controls (because it's predefined, not "our" dialog, not "our" controls).
+I see there is an answer that provides a simple way to keep `DeleteDontAskCheckbox` from taking the focus. In terms of the other requirement of accessing the buttons, an enumerator of all the controls might work where `FindName` won't. 
 
 ~~~
 private IEnumerable<DependencyObject> Traverse(DependencyObject parent)
@@ -31,52 +29,78 @@ private IEnumerable<DependencyObject> Traverse(DependencyObject parent)
 }
 ~~~
 
+
+You said:
+
+>I'm aware of `VisualTreeHelper.GetOpenPopupsForXamlRoot()` and I've experimented with that in the dialog's Opened event handler, but navigating the subsequent hierarchy is not straightforward (FindName("CloseButton") does not work, for example), and I can't help thinking there's either a more direct way of accessing the button, or someone has written a helper to do the same.
+
+The usage of the iterator, the (somewhat) "more direct way", would look something like this:
+
+~~~
+var buttonCancel = Traverse(dialog)
+    .OfType<Button>()
+    .FirstOrDefault(_ => _.Content?.ToString() == "Cancel");
+~~~
 ___
 
-**Step Two**, use the iterator to obtain the controls you want to manipulate and "do whatever you want".
+Using, as you mentioned, the dialog's `Opened` event handler, I tested this as a proof of concept only. You may still have to play around with it a bit. I'll put a link to the code I used to test it if you want to make sure it works on your end.
 
-_THIS IS JUST AN EXAMPLE. You may find that you need to play around with it._
 
 ~~~
 private void OnContentDialogOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
 {
     if (sender is ContentDialog dialog)
     {
-        const string BUTTON_TO_FOCUS = "Cancel";
-        // Allowing for possible race condition...
-        if (dialog.FindName("DeleteDontAskCheckbox") is CheckBox checkbox)
+        if( !dialog.DispatcherQueue.TryEnqueue(() => 
         {
-            // Prevent the thing you don't want
-            checkbox.GettingFocus += (sender, e) =>
-            {
-                e.Handled = e.Cancel = true;
-                localFocusButton();
-            };
-            // Request the thing you do want
-            localFocusButton();
+            const string BUTTON_TO_FOCUS = "Cancel";
 
-            #region L o c a l F x
-            void localFocusButton()
-            {                        
-                if (Traverse(dialog)
-                    .OfType<Button>()
-                    .FirstOrDefault(_ => _.Content?.ToString() == BUTTON_TO_FOCUS) is { } button)
+            // Find by text
+            if (Traverse(dialog)
+                .OfType<Button>()
+                .FirstOrDefault(_ => _.Content?.ToString() == BUTTON_TO_FOCUS) is { } button)
+            {
+                if (button.FocusState == FocusState.Unfocused)
                 {
-                    if (button.FocusState == FocusState.Unfocused)
-                    {
-                        button.Focus(FocusState.Programmatic);
-                    }
+                    button.Focus(FocusState.Programmatic);
                 }
             }
-            #endregion L o c a l F x
+        }))
+        {
+            Debug.WriteLine("Failed to enqueue action.");
         }
     }
 }
 ~~~
 
+___
 
+**XAML with `Opened` event handler**
 
-[![initial focus][1]][1]
+~~~
+<Window
+    x:Class="CheckboxTest.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CheckboxTest"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="ContentDialog Focus Test">
 
-
-  [1]: https://i.sstatic.net/E4fb5BbZ.png
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <ContentDialog
+            x:Name="DeleteConfirmationDialog"
+            Title="Delete file"
+            PrimaryButtonText="Move to Recycle Bin"
+            CloseButtonText="Cancel"
+            DefaultButton="Close"
+            Opened="OnContentDialogOpened">
+            <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Spacing="12">
+                <TextBlock TextWrapping="Wrap" Text="Are you sure you want to move file 'somefile.jpg' to the Recycle Bin?" />
+                <CheckBox x:Name="DeleteDontAskCheckbox" IsTabStop="False"  Content="Don't ask me again" />
+            </StackPanel>
+        </ContentDialog>
+    </StackPanel>
+</Window>
+~~~
