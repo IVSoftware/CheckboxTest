@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace CheckboxTest
@@ -32,7 +33,17 @@ namespace CheckboxTest
         {
             if (sender is ContentDialog dialog)
             {
-                InspectContentDialog(dialog);
+                foreach (var control in Traverse(dialog))
+                {
+                    if (control is FrameworkElement element)
+                    {
+                        Debug.WriteLine($"Type: {element.GetType().Name}, Name: {element.Name}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Type: {control.GetType().Name}");
+                    }
+                }
                 if (dialog.FindName("DeleteDontAskCheckbox") is CheckBox checkbox)
                 {
                     dialog.DispatcherQueue.TryEnqueue(() =>
@@ -42,54 +53,32 @@ namespace CheckboxTest
                 }
             }
         }
-        private void InspectContentDialog(ContentDialog dialog)
+        private IEnumerable<DependencyObject> Traverse(DependencyObject parent)
         {
-            Popup popup = FindPopup(dialog);
+            if (parent == null)
+                yield break;
 
-            if (popup != null && popup.Child is FrameworkElement popupContent)
+            yield return parent; 
+            if (parent is Popup popup && popup.Child is DependencyObject popupContent)
             {
-                Debug.WriteLine($"Popup found: {popupContent.GetType().Name}");
-                InventoryControls(popupContent);
+                foreach (var descendant in Traverse(popupContent))
+                {
+                    yield return descendant;
+                }
             }
             else
             {
-                Debug.WriteLine("Popup or its content not found.");
-            }
-        }
-
-        private Popup FindPopup(DependencyObject parent)
-        {
-            int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is Popup popup)
+                int childCount = VisualTreeHelper.GetChildrenCount(parent);
+                for (int i = 0; i < childCount; i++)
                 {
-                    return popup;
-                }
-                Popup foundPopup = FindPopup(child);
-                if (foundPopup != null)
-                {
-                    return foundPopup;
+                    var child = VisualTreeHelper.GetChild(parent, i);
+                    foreach (var descendant in Traverse(child))
+                    {
+                        yield return descendant;
+                    }
                 }
             }
-            return null;
         }
-        private void InventoryControls(DependencyObject parent, int level = 0)
-        {
-            if (parent == null) return;
 
-            int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < childCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-
-                string name = (child as FrameworkElement)?.Name ?? "Unnamed";
-                string type = child.GetType().Name;
-
-                Debug.WriteLine($"{new string('-', level * 2)} Type: {type}, Name: {name}");
-                InventoryControls(child, level + 1);
-            }
-        }
     }
 }
