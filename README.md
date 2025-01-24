@@ -1,6 +1,6 @@
-Granted, this is the more complicated answer but when I tried simply setting IsTabStop to false it didn't work, and didn't focus the intended button.
+Granted, this is the more complicated answer but when I tried simply setting `IsTabStop` to `false` I couldn't get that to work, and didn't focus the intended button. I tested this as a proof of concept and will link my repo in the comments.
 
-Step One, we need an iterator for the `ContentDiaolg` controls (because it's predefined, not "our" dialog, not "our" controls).
+**Step One**, we need an iterator for the `ContentDiaolg` controls (because it's predefined, not "our" dialog, not "our" controls).
 
 ~~~
 private IEnumerable<DependencyObject> Traverse(DependencyObject parent)
@@ -33,7 +33,7 @@ private IEnumerable<DependencyObject> Traverse(DependencyObject parent)
 
 ___
 
-Step Two, use the iterator to obtrin the controls you want to manipulate and "do whatever you want".
+**Step Two**, use the iterator to obtain the controls you want to manipulate and "do whatever you want".
 
 _THIS IS JUST AN EXAMPLE. You may find that you need to play around with it._
 
@@ -74,3 +74,9 @@ private void OnContentDialogOpened(ContentDialog sender, ContentDialogOpenedEven
 }
 ~~~
 
+
+
+[![initial focus][1]][1]
+
+
+  [1]: https://i.sstatic.net/E4fb5BbZ.png
