@@ -1,4 +1,4 @@
-Granted, this is the more complicated answer but when I tried simply setting `IsTabStop` to `false` I couldn't get that to work, and didn't focus the intended button. I tested this as a proof of concept and will link my repo in the comments.
+Granted, this is the more complicated answer but when I tried simply setting `IsTabStop` to `false` I couldn't get that to work, and that doesn't provide the opportunity to focus the intended button. I tested this as a proof of concept and will link my repo in the comments.
 
 **Step One**, we need an iterator for the `ContentDiaolg` controls (because it's predefined, not "our" dialog, not "our" controls).
 
