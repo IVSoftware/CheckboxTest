@@ -37,14 +37,19 @@ namespace CheckboxTest
             if (sender is ContentDialog dialog)
             {
                 const string BUTTON_TO_FOCUS = "Cancel";
+                // Allowing for possible race condition...
                 if (dialog.FindName("DeleteDontAskCheckbox") is CheckBox checkbox)
                 {
+                    // Prevent the thing you don't want
                     checkbox.GettingFocus += (sender, e) =>
                     {
                         e.Handled = e.Cancel = true;
                         localFocusButton();
                     };
+                    // Request the thing you do want
                     localFocusButton();
+
+                    #region L o c a l F x
                     void localFocusButton()
                     {                        
                         if (Traverse(dialog)
@@ -57,6 +62,7 @@ namespace CheckboxTest
                             }
                         }
                     }
+                    #endregion L o c a l F x
                 }
             }
         }
